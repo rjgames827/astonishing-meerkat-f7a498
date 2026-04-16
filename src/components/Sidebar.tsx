@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Home, Film, Tv, Sparkles, BookOpen, Heart, Camera, Globe, Users, Gamepad2, LayoutGrid, Settings as SettingsIcon, Shield, Code, Music, Database, MessageSquare, ShieldCheck } from 'lucide-react';
+import { Home, Film, Tv, Sparkles, BookOpen, Heart, Camera, Globe, Users, Gamepad2, LayoutGrid, Settings as SettingsIcon, Shield, Code, Music, Database, MessageSquare, ShieldCheck, Zap } from 'lucide-react';
 import { Category } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/context/LanguageContext';
@@ -39,7 +39,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeCategory, logoUrl, onLogoChange
     { id: 'support' as Category, label: 'Devs', icon: Heart },
     { id: 'chat' as Category, label: 'Chat', icon: MessageSquare },
     ...(isAdmin ? [{ id: 'admin-chat' as Category, label: 'Admin Chat', icon: ShieldCheck }] : []),
-    { id: 'hall-of-cornballs' as Category, label: 'Hall of Cornballs', icon: MessageSquare }, // FIXED ID AND LABEL
+    { id: 'hall-of-cornballs' as Category, label: 'Hall of Cornballs', icon: MessageSquare }, // Updated
+    { id: 'hall-of-tuff' as Category, label: 'Hall of Tuff', icon: Zap }, // New Hall added
     { id: 'games' as Category, label: 'Games', icon: Gamepad2 },
     { id: 'movies' as Category, label: 'Movies', icon: Film },
     { id: 'tv shows' as Category, label: 'TV', icon: Tv },
@@ -108,7 +109,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeCategory, logoUrl, onLogoChange
                   <Icon size={22} />
                 </div>
                 <span 
-                  className="text-[10px] font-black uppercase tracking-[0.2em] italic"
+                  className="text-[10px] font-black uppercase tracking-[0.2em] italic whitespace-nowrap"
                 >
                   {t(item.label)}
                 </span>
