@@ -63,7 +63,7 @@ export interface ProxyItem {
   name?: string;
 }
 
-// Updated to include 'hall-of-cornballs' and 'hall-of-tuff'
+// FIXED: Removed 'hall-of-tuff' from the Category list
 export type Category = 
   | 'home' 
   | 'movies' 
@@ -81,8 +81,7 @@ export type Category =
   | 'games' 
   | 'chat' 
   | 'admin-chat' 
-  | 'hall-of-cornballs' 
-  | 'hall-of-tuff';
+  | 'hall-of-cornballs';
 
 export interface Anime {
   title: string;
