@@ -20,7 +20,6 @@ import AuthModal from '@/components/AuthModal';
 import SuggestionModal from '@/components/SuggestionModal';
 import AppealModal from '@/components/AppealModal';
 import HallOfAutism from '@/components/HallOfAutism';
-import HallOfTuff from '@/components/HallOfTuff'; // Added for step 4
 import { SiteAnnouncements } from '@/components/SiteAnnouncements';
 import { Search, X, Film, Sparkles, BookOpen, Tv, SearchX, PlayCircle, Star, Globe, Users, ExternalLink, ShieldAlert, Zap, MessageSquare, Activity, Loader2, Book, AlertTriangle, Settings as SettingsIcon, GitCommit, ChevronDown, LayoutGrid, Gamepad2, ShieldCheck, LogOut, LogIn, Send } from 'lucide-react';
 
@@ -66,52 +65,11 @@ const TranslatedText: React.FC<{ text: string }> = ({ text }) => {
   return <>{translated}</>;
 };
 
-const ScrambleEffect: React.FC = () => {
-  useEffect(() => {
-    let interval: any;
-    const originalTexts = new Map<HTMLElement, string>();
-    const scrambleText = (text: string) => {
-      if (!text) return '';
-      return text.split(' ').map(word => {
-        if (word.length <= 3) return word;
-        const chars = word.split('');
-        for (let i = chars.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [chars[i], chars[j]] = [chars[j], chars[i]];
-        }
-        return chars.join('');
-      }).join(' ');
-    };
-    const runScramble = () => {
-      if (document.documentElement.dataset.theme !== 'aprilfools') return;
-      const elements = Array.from(document.querySelectorAll('h1, h2, h3, p, span, button')) as HTMLElement[];
-      const targetElements = elements
-        .filter(el => el.childNodes.length === 1 && el.childNodes[0].nodeType === 3 && Math.random() > 0.9)
-        .slice(0, 5);
-      targetElements.forEach(el => {
-        if (!originalTexts.has(el)) originalTexts.set(el, el.innerText);
-        el.innerText = scrambleText(el.innerText);
-      });
-      setTimeout(() => {
-        targetElements.forEach(el => {
-          const original = originalTexts.get(el);
-          if (original && document.contains(el)) {
-            el.innerText = original;
-            originalTexts.delete(el);
-          }
-        });
-      }, 1000);
-    };
-    interval = setInterval(runScramble, 10000);
-    return () => clearInterval(interval);
-  }, []);
-  return null;
-};
-
 const getInitialCategory = (): Category => {
   const path = window.location.pathname.substring(1).toLowerCase();
   const normalizedPath = path.replace(/-/g, ' ') as Category;
-  const validCategories: Category[] = ['home', 'movies', 'tv shows', 'anime', 'manga', 'proxies', 'partners', 'dev', 'support', 'apps', 'browser', 'settings', 'music', 'games', 'chat', 'admin-chat', 'hall-of-cornballs', 'hall-of-tuff'];
+  // FIXED: Removed hall-of-tuff from valid categories
+  const validCategories: Category[] = ['home', 'movies', 'tv shows', 'anime', 'manga', 'proxies', 'partners', 'dev', 'support', 'apps', 'browser', 'settings', 'music', 'games', 'chat', 'admin-chat', 'hall-of-cornballs'];
   
   if (validCategories.includes(normalizedPath)) {
     return normalizedPath;
@@ -140,7 +98,6 @@ const Index: React.FC = () => {
   };
 
   const [selectedItem, setSelectedItem] = useState<{item: LibraryItem, category: string, showPlayer: boolean} | null>(null);
-  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isUpdateLogOpen, setIsUpdateLogOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
@@ -206,7 +163,6 @@ const Index: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-bg text-text-primary">
-      <ScrambleEffect />
       <SiteAnnouncements />
       <div id="app" className="fixed inset-0 flex flex-col overflow-hidden bg-bg">
         <Sidebar activeCategory={activeCategory} logoUrl={customLogo} onLogoChange={handleUpdateLogo} isAdmin={isAdmin} onSelect={navigate} />
@@ -227,10 +183,7 @@ const Index: React.FC = () => {
           <div id="content-area" className="flex-1 p-4 md:p-10 custom-scrollbar">
             <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
               {isPageLoading ? (
-                <div className="flex flex-col items-center justify-center py-40">
-                  <Loader2 size={64} className="text-accent animate-spin mb-4" />
-                  <h2 className="text-white font-black uppercase tracking-widest italic">Loading Archive...</h2>
-                </div>
+                <div className="flex justify-center py-40"><Loader2 size={64} className="text-accent animate-spin" /></div>
               ) : (
                 <AnimatePresence mode="wait">
                   <motion.div key={activeCategory} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full pb-24">
@@ -253,6 +206,7 @@ const Index: React.FC = () => {
                       </div>
                     )}
 
+                    {/* FIXED: Rendering block for Hall of Cornballs stays, Hall of Tuff removed */}
                     {activeCategory === 'hall-of-cornballs' && (
                       <div className="mt-20 max-w-[1600px] mx-auto pb-40 px-4 relative">
                         <div className="text-center mb-16">
@@ -260,16 +214,6 @@ const Index: React.FC = () => {
                           <p className="text-text-secondary max-w-2xl mx-auto font-medium">A showcase of Cornballs</p>
                         </div>
                         <HallOfAutism isSuperAdmin={isSuperAdmin} />
-                      </div>
-                    )}
-
-                    {activeCategory === 'hall-of-tuff' && (
-                      <div className="mt-20 max-w-[1600px] mx-auto pb-40 px-4 relative">
-                        <div className="text-center mb-16">
-                          <h1 className="text-7xl font-black italic uppercase tracking-tighter text-white mb-4">Hall of Tuff</h1>
-                          <p className="text-text-secondary max-w-2xl mx-auto font-medium">A showcase of the Tuffest</p>
-                        </div>
-                        <HallOfTuff isSuperAdmin={isSuperAdmin} />
                       </div>
                     )}
 
