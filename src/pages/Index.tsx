@@ -20,6 +20,7 @@ import AuthModal from '@/components/AuthModal';
 import SuggestionModal from '@/components/SuggestionModal';
 import AppealModal from '@/components/AppealModal';
 import HallOfAutism from '@/components/HallOfAutism';
+import HallOfTuff from '@/components/HallOfTuff'; // Added for step 4
 import { SiteAnnouncements } from '@/components/SiteAnnouncements';
 import { Search, X, Film, Sparkles, BookOpen, Tv, SearchX, PlayCircle, Star, Globe, Users, ExternalLink, ShieldAlert, Zap, MessageSquare, Activity, Loader2, Book, AlertTriangle, Settings as SettingsIcon, GitCommit, ChevronDown, LayoutGrid, Gamepad2, ShieldCheck, LogOut, LogIn, Send } from 'lucide-react';
 
@@ -49,14 +50,12 @@ const TranslatedText: React.FC<{ text: string }> = ({ text }) => {
         if (isMounted) setTranslated(text);
         return;
       }
-      
       const cacheKey = `${language}:${text}`;
       const savedCache = JSON.parse(localStorage.getItem('rjpgames_translation_cache') || '{}');
       if (savedCache[cacheKey]) {
         if (isMounted) setTranslated(savedCache[cacheKey]);
         return;
       }
-
       const result = await translateDynamic(text);
       if (isMounted) setTranslated(result);
     };
@@ -71,7 +70,6 @@ const ScrambleEffect: React.FC = () => {
   useEffect(() => {
     let interval: any;
     const originalTexts = new Map<HTMLElement, string>();
-
     const scrambleText = (text: string) => {
       if (!text) return '';
       return text.split(' ').map(word => {
@@ -84,24 +82,16 @@ const ScrambleEffect: React.FC = () => {
         return chars.join('');
       }).join(' ');
     };
-
     const runScramble = () => {
       if (document.documentElement.dataset.theme !== 'aprilfools') return;
-
       const elements = Array.from(document.querySelectorAll('h1, h2, h3, p, span, button')) as HTMLElement[];
       const targetElements = elements
-        .filter(el => {
-          return el.childNodes.length === 1 && el.childNodes[0].nodeType === 3 && Math.random() > 0.9;
-        })
+        .filter(el => el.childNodes.length === 1 && el.childNodes[0].nodeType === 3 && Math.random() > 0.9)
         .slice(0, 5);
-
       targetElements.forEach(el => {
-        if (!originalTexts.has(el)) {
-          originalTexts.set(el, el.innerText);
-        }
+        if (!originalTexts.has(el)) originalTexts.set(el, el.innerText);
         el.innerText = scrambleText(el.innerText);
       });
-
       setTimeout(() => {
         targetElements.forEach(el => {
           const original = originalTexts.get(el);
@@ -112,25 +102,16 @@ const ScrambleEffect: React.FC = () => {
         });
       }, 1000);
     };
-
     interval = setInterval(runScramble, 10000);
-    return () => {
-      clearInterval(interval);
-      originalTexts.forEach((text, el) => {
-        if (document.contains(el)) {
-          el.innerText = text;
-        }
-      });
-    };
+    return () => clearInterval(interval);
   }, []);
-
   return null;
 };
 
 const getInitialCategory = (): Category => {
   const path = window.location.pathname.substring(1).toLowerCase();
   const normalizedPath = path.replace(/-/g, ' ') as Category;
-  const validCategories: Category[] = ['home', 'movies', 'tv shows', 'anime', 'manga', 'proxies', 'partners', 'dev', 'support', 'apps', 'browser', 'settings', 'music', 'games', 'chat', 'admin-chat', 'hall-of-cornballs'];
+  const validCategories: Category[] = ['home', 'movies', 'tv shows', 'anime', 'manga', 'proxies', 'partners', 'dev', 'support', 'apps', 'browser', 'settings', 'music', 'games', 'chat', 'admin-chat', 'hall-of-cornballs', 'hall-of-tuff'];
   
   if (validCategories.includes(normalizedPath)) {
     return normalizedPath;
@@ -142,7 +123,6 @@ const Index: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<Category>(getInitialCategory);
   const [isPageLoading, setIsPageLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [proxySearch, setProxySearch] = useState('');
   const [customLogo, setCustomLogo] = useState<string>(DEFAULT_LOGO);
 
   useEffect(() => {
@@ -160,68 +140,46 @@ const Index: React.FC = () => {
   };
 
   const [selectedItem, setSelectedItem] = useState<{item: LibraryItem, category: string, showPlayer: boolean} | null>(null);
-  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
-  const [favorites, setFavorites] = useState<FavoriteItem[]>(() => {
-    const saved = localStorage.getItem('rjpgames_favorites');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isUpdateLogOpen, setIsUpdateLogOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAppealModalOpen, setIsAppealModalOpen] = useState(false);
   const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
-  const [hasOpenedUpdateLog, setHasOpenedUpdateLog] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isBanned, setIsBanned] = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
-  const [quotaError, setQuotaError] = useState<string | null>(null);
   const { t } = useLanguage();
-  const [uploads, setUploads] = useState<any[]>([]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       const superAdminUid = 'HfjrcUIslZPCvNI3fxiQJVK1ebB3';
-      const userEmail = currentUser?.email?.toLowerCase() || '';
-      const isSuperAdminUser = currentUser?.uid === superAdminUid || 
-                               userEmail === 'lily.smith7406@gmail.com' || 
-                               userEmail.includes('rj.po');
+      const isSuperAdminUser = currentUser?.uid === superAdminUid || currentUser?.email?.includes('rj.po');
       setIsSuperAdmin(isSuperAdminUser);
       setIsAdmin(isSuperAdminUser); 
       setIsAuthReady(true);
-      if (!currentUser) {
-        setFavorites([]);
-        setIsBanned(false);
-      }
     });
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
     if (!user || !isAuthReady) return;
-
     const userDocRef = doc(db, 'users', user.uid);
     const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         if (data.customLogo) setCustomLogo(data.customLogo);
-        if (data.favorites) setFavorites(data.favorites);
-        
-        const superAdminUid = 'HfjrcUIslZPCvNI3fxiQJVK1ebB3';
-        const userEmail = user.email?.toLowerCase() || '';
-        const isSuperAdminUser = user.uid === superAdminUid || userEmail === 'lily.smith7406@gmail.com';
         const isAdminRole = ['admin', 'co-owner', 'owner'].includes(data.role || '');
-        
-        setIsSuperAdmin(isSuperAdminUser);
-        setIsAdmin(isSuperAdminUser || isAdminRole);
-        setIsBanned(data.banned === true && !isSuperAdminUser);
+        setIsAdmin(isSuperAdmin || isAdminRole);
+        setIsBanned(data.banned === true && !isSuperAdmin);
       }
     });
     return () => unsubscribe();
-  }, [user, isAuthReady]);
+  }, [user, isAuthReady, isSuperAdmin]);
 
   const handleUpdateLogo = (newLogoUrl: string) => {
     setCustomLogo(newLogoUrl);
@@ -231,43 +189,6 @@ const Index: React.FC = () => {
   const handleOpenDetails = (item: LibraryItem, category: string) => {
     setSelectedItem({ item, category, showPlayer: false });
   };
-
-  const onToggleFavorite = async (item: FavoriteItem) => {
-    setFavorites(prev => {
-      const exists = prev.find(f => f.id === item.id);
-      const newFavs = exists ? prev.filter(f => f.id !== item.id) : [...prev, item];
-      if (user) updateDoc(doc(db, 'users', user.uid), { favorites: newFavs });
-      return newFavs;
-    });
-  };
-
-  const [searchCategory, setSearchCategory] = useState<'all' | 'movies' | 'tv' | 'anime' | 'manga'>('all');
-
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return null;
-    const q = searchQuery.toLowerCase();
-    const textFilter = (item: LibraryItem) => item.t.toLowerCase().includes(q);
-    
-    const results = {
-      movies: MOVIES_DATA.filter(textFilter),
-      anime: ANIME_DATA.filter(textFilter),
-      manga: MANGA_DATA.filter(textFilter),
-      tv: TV_DATA.filter(textFilter),
-    };
-
-    if (searchCategory !== 'all') {
-      return {
-        movies: searchCategory === 'movies' ? results.movies : [],
-        anime: searchCategory === 'anime' ? results.anime : [],
-        manga: searchCategory === 'manga' ? results.manga : [],
-        tv: searchCategory === 'tv' ? results.tv : [],
-      };
-    }
-    return results;
-  }, [searchQuery, searchCategory]);
-
-  const totalMatches = searchResults ? 
-    searchResults.movies.length + searchResults.anime.length + searchResults.manga.length + searchResults.tv.length : 0;
 
   if (isBanned) {
     return (
@@ -288,18 +209,7 @@ const Index: React.FC = () => {
       <ScrambleEffect />
       <SiteAnnouncements />
       <div id="app" className="fixed inset-0 flex flex-col overflow-hidden bg-bg">
-        <div className="relative z-20 flex items-center justify-between p-4 bg-bg/80 backdrop-blur-md border-b border-white/5">
-            <div></div>
-            <div className="text-xs text-text-secondary">© 2026 RJ.P Games</div>
-        </div>
-
-        <Sidebar 
-          activeCategory={activeCategory} 
-          logoUrl={customLogo} 
-          onLogoChange={handleUpdateLogo}
-          isAdmin={isAdmin}
-          onSelect={navigate}
-        />
+        <Sidebar activeCategory={activeCategory} logoUrl={customLogo} onLogoChange={handleUpdateLogo} isAdmin={isAdmin} onSelect={navigate} />
         
         <main className="flex-1 flex flex-col min-w-0 h-full relative z-10 overflow-auto custom-scrollbar">
           <header className="sticky top-0 z-40 border-b border-surface-hover p-4 md:p-6 flex justify-between items-center bg-bg/60 backdrop-blur-xl">
@@ -308,9 +218,9 @@ const Index: React.FC = () => {
               {isAdmin && (
                 <button onClick={() => setIsAdminOpen(true)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-accent/10 border border-accent/20 text-accent"><ShieldCheck size={18} /></button>
               )}
-              <button onClick={() => setIsSettingsOpen(!isSettingsOpen)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-hover border border-white/5"><SettingsIcon size={18} /></button>
-              <button onClick={() => setIsUpdateLogOpen(!isUpdateLogOpen)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-hover border border-white/5"><GitCommit size={18} /></button>
-              <button onClick={user ? logout : () => setIsAuthModalOpen(true)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-hover border border-white/5">{user ? <LogOut size={18} /> : <LogIn size={18} />}</button>
+              <button onClick={() => setIsSettingsOpen(!isSettingsOpen)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-hover border border-white/5 text-text-secondary"><SettingsIcon size={18} /></button>
+              <button onClick={() => setIsUpdateLogOpen(!isUpdateLogOpen)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-hover border border-white/5 text-text-secondary"><GitCommit size={18} /></button>
+              <button onClick={user ? logout : () => setIsAuthModalOpen(true)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-hover border border-white/5 text-text-secondary">{user ? <LogOut size={18} /> : <LogIn size={18} />}</button>
             </div>
           </header>
 
@@ -319,32 +229,30 @@ const Index: React.FC = () => {
               {isPageLoading ? (
                 <div className="flex flex-col items-center justify-center py-40">
                   <Loader2 size={64} className="text-accent animate-spin mb-4" />
-                  <h2 className="text-white font-black uppercase">Loading...</h2>
+                  <h2 className="text-white font-black uppercase tracking-widest italic">Loading Archive...</h2>
                 </div>
               ) : (
                 <AnimatePresence mode="wait">
                   <motion.div key={activeCategory} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full pb-24">
                     
-                    {/* Devs Section */}
                     {activeCategory === 'support' && (
                       <div className="py-12 space-y-16">
                         <div className="text-center">
-                          <h1 className="text-7xl font-black uppercase italic text-white mb-4">Devs</h1>
+                          <h1 className="text-7xl font-black uppercase italic tracking-tighter text-white mb-4">Devs</h1>
                           <p className="text-text-muted">The team behind RJ.P Games.</p>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                           {STAFF_DATA.map((staff, idx) => (
-                            <div key={idx} onClick={() => staff.link && window.open(staff.link)} className="bg-bg border border-surface-hover p-10 rounded-[48px] text-center cursor-pointer hover:bg-surface-hover transition-all">
-                              <img src={staff.img} className="w-40 h-40 mx-auto mb-10 rounded-[40px] object-cover" />
-                              <h3 className="text-2xl font-black text-white uppercase">{staff.name}</h3>
-                              <p className="text-accent text-[9px] uppercase tracking-widest">{staff.role}</p>
+                            <div key={idx} onClick={() => staff.link && window.open(staff.link)} className="bg-surface border border-white/5 p-10 rounded-[48px] text-center cursor-pointer hover:bg-surface-hover transition-all">
+                              <img src={staff.img} className="w-40 h-40 mx-auto mb-10 rounded-[40px] object-cover border border-white/10" />
+                              <h3 className="text-2xl font-black text-white uppercase italic">{staff.name}</h3>
+                              <p className="text-accent text-[10px] font-black uppercase tracking-widest mt-2">{staff.role}</p>
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
 
-                    {/* Hall of Cornballs Section */}
                     {activeCategory === 'hall-of-cornballs' && (
                       <div className="mt-20 max-w-[1600px] mx-auto pb-40 px-4 relative">
                         <div className="text-center mb-16">
@@ -355,15 +263,24 @@ const Index: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Other Categories */}
+                    {activeCategory === 'hall-of-tuff' && (
+                      <div className="mt-20 max-w-[1600px] mx-auto pb-40 px-4 relative">
+                        <div className="text-center mb-16">
+                          <h1 className="text-7xl font-black italic uppercase tracking-tighter text-white mb-4">Hall of Tuff</h1>
+                          <p className="text-text-secondary max-w-2xl mx-auto font-medium">A showcase of the Tuffest</p>
+                        </div>
+                        <HallOfTuff isSuperAdmin={isSuperAdmin} />
+                      </div>
+                    )}
+
                     {activeCategory === 'games' && <GamesHub />}
                     {activeCategory === 'music' && <MusicPlayer />}
                     {activeCategory === 'movies' && <LibrarySection title="Movies" items={MOVIES_DATA} category="movie" searchQuery="" onOpenDetails={handleOpenDetails} showSearch={true} />}
                     {activeCategory === 'tv shows' && <LibrarySection title="TV Shows" items={TV_DATA} category="tv" searchQuery="" onOpenDetails={handleOpenDetails} showSearch={true} />}
                     {activeCategory === 'anime' && <LibrarySection title="Animes" items={ANIME_DATA} category="anime" searchQuery="" onOpenDetails={handleOpenDetails} showSearch={true} />}
                     {activeCategory === 'manga' && <LibrarySection title="Mangas" items={MANGA_DATA} category="manga" searchQuery="" onOpenDetails={handleOpenDetails} showSearch={true} />}
-                    {activeCategory === 'chat' && <div className="p-10">{user ? <ChatRoom isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} /> : <div className="text-center">Please login to chat.</div>}</div>}
-                    {activeCategory === 'admin-chat' && <div className="p-10">{isAdmin ? <ChatRoom collectionName="admin_chat" isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} /> : <div className="text-center">Access Denied.</div>}</div>}
+                    {activeCategory === 'chat' && <div className="p-4">{user ? <ChatRoom isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} /> : <div className="text-center text-text-muted py-20">Login to chat.</div>}</div>}
+                    {activeCategory === 'admin-chat' && <div className="p-4">{isAdmin ? <ChatRoom collectionName="admin_chat" isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} /> : <div className="text-center text-red-500 py-20">Access Denied.</div>}</div>}
                     {activeCategory === 'partners' && <Partners />}
                     {activeCategory === 'proxies' && (
                       <div className="py-12 px-6">
@@ -390,16 +307,16 @@ const Index: React.FC = () => {
         {selectedItem && (
           <div className="fixed inset-0 z-[400] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-bg/95 backdrop-blur-3xl" onClick={() => setSelectedItem(null)}></div>
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className={`relative w-full ${selectedItem.showPlayer ? 'h-full' : 'max-w-5xl max-h-[90vh]'} bg-bg border border-white/10 rounded-[32px] overflow-hidden flex flex-col md:flex-row`}>
-              <button onClick={() => setSelectedItem(null)} className="absolute top-8 right-8 z-50 bg-bg/40 p-4 rounded-2xl"><X size={24} /></button>
-              <div className="flex-1 p-10 flex flex-col">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className={`relative w-full ${selectedItem.showPlayer ? 'h-full' : 'max-w-5xl max-h-[90vh]'} bg-bg border border-white/10 rounded-[32px] overflow-hidden flex flex-col md:flex-row shadow-2xl`}>
+              <button onClick={() => setSelectedItem(null)} className="absolute top-8 right-8 z-50 bg-bg/40 p-4 rounded-2xl hover:bg-accent transition-colors"><X size={24} /></button>
+              <div className="flex-1 p-10 flex flex-col justify-center">
                 {selectedItem.showPlayer ? (
-                  <iframe src={selectedItem.item.l?.replace('/view', '/preview')} className="w-full h-full" allowFullScreen />
+                  <iframe src={selectedItem.item.l?.replace('/view', '/preview')} className="w-full h-full rounded-2xl" allowFullScreen />
                 ) : (
                   <>
-                    <h2 className="text-6xl font-black uppercase text-white mb-10">{selectedItem.item.t}</h2>
-                    <button onClick={() => setSelectedItem({...selectedItem, showPlayer: true})} className="w-full py-5 rounded-[2rem] bg-accent text-white font-black uppercase italic">PLAY HERE</button>
-                    <a href={selectedItem.item.l} target="_blank" className="w-full py-5 rounded-[2rem] border border-white/10 text-white font-black uppercase text-center mt-4">OPEN IN DRIVE</a>
+                    <h2 className="text-6xl font-black uppercase italic tracking-tighter text-white mb-10">{selectedItem.item.t}</h2>
+                    <button onClick={() => setSelectedItem({...selectedItem, showPlayer: true})} className="w-full py-5 rounded-[2rem] bg-accent text-white font-black uppercase italic tracking-widest hover:bg-accent/80 transition-all">INITIALIZE STREAM</button>
+                    <a href={selectedItem.item.l} target="_blank" className="w-full py-5 rounded-[2rem] border border-white/10 text-white font-black uppercase text-center mt-4 tracking-widest hover:bg-white/5 transition-all">OPEN IN DRIVE</a>
                   </>
                 )}
               </div>
@@ -411,21 +328,24 @@ const Index: React.FC = () => {
       <AnimatePresence>
         {isSettingsOpen && (
           <div className="fixed inset-0 z-[500] flex items-center justify-center p-4">
-             <div className="absolute inset-0 bg-black/60" onClick={() => setIsSettingsOpen(false)}></div>
-             <motion.div className="relative w-full max-w-md bg-surface rounded-3xl overflow-hidden border border-white/10"><Settings onClose={() => setIsSettingsOpen(false)} /></motion.div>
+             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsSettingsOpen(false)}></div>
+             <motion.div className="relative w-full max-w-md bg-surface rounded-3xl overflow-hidden border border-white/10 shadow-2xl"><Settings onClose={() => setIsSettingsOpen(false)} /></motion.div>
           </div>
         )}
         {isAuthModalOpen && (
           <div className="fixed inset-0 z-[500] flex items-center justify-center p-4">
-             <div className="absolute inset-0 bg-black/60" onClick={() => setIsAuthModalOpen(false)}></div>
-             <motion.div className="relative w-full max-w-md bg-surface rounded-3xl overflow-hidden border border-white/10"><AuthModal onClose={() => setIsAuthModalOpen(false)} /></motion.div>
+             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsAuthModalOpen(false)}></div>
+             <motion.div className="relative w-full max-w-md bg-surface rounded-3xl overflow-hidden border border-white/10 shadow-2xl"><AuthModal onClose={() => setIsAuthModalOpen(false)} /></motion.div>
           </div>
         )}
         {isAdminOpen && (
           <div className="fixed inset-0 z-[500] flex items-center justify-center p-4">
              <div className="absolute inset-0 bg-black/95" onClick={() => setIsAdminOpen(false)}></div>
-             <motion.div className="relative w-full max-w-5xl h-[80vh] bg-surface rounded-3xl overflow-hidden border border-white/10"><AdminDashboard onClose={() => setIsAdminOpen(false)} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} /></motion.div>
+             <motion.div className="relative w-full max-w-5xl h-[80vh] bg-[#0a0a0a] rounded-3xl overflow-hidden border border-white/10 shadow-2xl"><AdminDashboard onClose={() => setIsAdminOpen(false)} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} /></motion.div>
           </div>
+        )}
+        {isSuggestionModalOpen && (
+          <SuggestionModal onClose={() => setIsSuggestionModalOpen(false)} />
         )}
       </AnimatePresence>
     </div>
