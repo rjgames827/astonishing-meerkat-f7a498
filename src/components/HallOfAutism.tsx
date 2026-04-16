@@ -30,7 +30,7 @@ const HallOfAutism: React.FC<HallOfAutismProps> = ({ isSuperAdmin = false }) => 
   const [selectedEntryForTakedown, setSelectedEntryForTakedown] = useState<HallEntry | null>(null);
 
   useEffect(() => {
-    // Note: Collection name stays 'hall_of_autism' to preserve your data
+    // We keep 'hall_of_autism' as the DB name so your existing data doesn't disappear
     const q = query(collection(db, 'hall_of_autism'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const newEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as HallEntry));
@@ -44,7 +44,7 @@ const HallOfAutism: React.FC<HallOfAutismProps> = ({ isSuperAdmin = false }) => 
     return () => unsubscribe();
   }, []);
 
-  // Sparkle effect on mouse move
+  // Sparkle effect
   useEffect(() => {
     const sparkleChars = ['✦', '✧', '✯', '✬', '✫', '*'];
     const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
@@ -185,6 +185,16 @@ const HallOfAutism: React.FC<HallOfAutismProps> = ({ isSuperAdmin = false }) => 
   return (
     <>
       <style>{`
+        @keyframes rainbow {
+          0% { color: #ff0000; }
+          17% { color: #ff8000; }
+          33% { color: #ffff00; }
+          50% { color: #00ff00; }
+          67% { color: #0000ff; }
+          84% { color: #8b00ff; }
+          100% { color: #ff0000; }
+        }
+        
         .hoa-sparkle {
           pointer-events: none;
           position: fixed;
@@ -202,14 +212,9 @@ const HallOfAutism: React.FC<HallOfAutismProps> = ({ isSuperAdmin = false }) => 
         }
         
         .rainbow-text {
-          background-image: linear-gradient(to left, violet, indigo, blue, green, yellow, orange, red);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          animation: rainbow-animation 5s linear infinite;
-        }
-
-        @keyframes rainbow-animation {
-          to { background-position: 4500px; }
+          /* SLOWED DOWN TO 15s */
+          animation: rainbow 15s linear infinite;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
       `}</style>
 
@@ -266,7 +271,7 @@ const HallOfAutism: React.FC<HallOfAutismProps> = ({ isSuperAdmin = false }) => 
                     <textarea
                       value={takedownReason}
                       onChange={(e) => setTakedownReason(e.target.value)}
-                      placeholder="Explain why this should be removed..."
+                      placeholder="Explain why this should be removed from the Hall of Cornballs..."
                       className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500 min-h-[100px] resize-y"
                       required
                     />
