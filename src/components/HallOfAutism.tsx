@@ -30,6 +30,7 @@ const HallOfAutism: React.FC<HallOfAutismProps> = ({ isSuperAdmin = false }) => 
   const [selectedEntryForTakedown, setSelectedEntryForTakedown] = useState<HallEntry | null>(null);
 
   useEffect(() => {
+    // Database name stays 'hall_of_autism' to preserve data
     const q = query(collection(db, 'hall_of_autism'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const newEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as HallEntry));
@@ -43,7 +44,7 @@ const HallOfAutism: React.FC<HallOfAutismProps> = ({ isSuperAdmin = false }) => 
     return () => unsubscribe();
   }, []);
 
-  // RESTORED: Background music
+  // Background music (jaydes - hysteric)
   useEffect(() => {
     const audio = new Audio('/jaydes-hysteric.mp3');
     audio.loop = true;
@@ -156,7 +157,7 @@ const HallOfAutism: React.FC<HallOfAutismProps> = ({ isSuperAdmin = false }) => 
         status: 'pending', createdAt: serverTimestamp(),
       });
       setName(''); setImageUrl(''); setDescription(''); setShowRequestForm(false);
-      alert('Request submitted!');
+      alert('Request submitted! An admin will review it soon.');
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, 'hall_of_autism_requests');
     } finally {
@@ -194,7 +195,8 @@ const HallOfAutism: React.FC<HallOfAutismProps> = ({ isSuperAdmin = false }) => 
         }
         
         .rainbow-text {
-          animation: rainbow 15s linear infinite; /* SLOWED TO 15s */
+          /* SPEED SET TO 10s (FASTER THAN 15s, SLOWER THAN 5s) */
+          animation: rainbow 10s linear infinite;
           text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
       `}</style>
