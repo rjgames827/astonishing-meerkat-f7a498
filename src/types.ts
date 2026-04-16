@@ -63,7 +63,7 @@ export interface ProxyItem {
   name?: string;
 }
 
-export type Category = 'home' | 'movies' | 'tv shows' | 'anime' | 'manga' | 'proxies' | 'partners' | 'dev' | 'support' | 'apps' | 'browser' | 'settings' | 'music' | 'games' | 'chat' | 'admin-chat' | 'Hall of Cornballs';
+export type Category = 'home' | 'movies' | 'tv shows' | 'anime' | 'manga' | 'proxies' | 'partners' | 'dev' | 'support' | 'apps' | 'browser' | 'settings' | 'music' | 'games' | 'chat' | 'admin-chat' | 'hall-of-cornballs';
 
 export interface Anime {
   title: string;
